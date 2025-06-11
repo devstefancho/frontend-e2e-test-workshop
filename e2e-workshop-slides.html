@@ -1,0 +1,690 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ReactFlow E2E 테스트 워크샵</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          sans-serif;
+        background: #0a0a0a;
+        color: #ffffff;
+        overflow: hidden;
+      }
+
+      .presentation {
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+      }
+
+      .slide {
+        width: 90%;
+        max-width: 1200px;
+        height: 85vh;
+        display: none;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 60px;
+        animation: slideIn 0.5s ease-out;
+        text-align: center;
+      }
+
+      .slide.active {
+        display: flex;
+      }
+
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateX(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+
+      h1 {
+        font-size: 4rem;
+        font-weight: 800;
+        margin-bottom: 30px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        line-height: 1.2;
+      }
+
+      h2 {
+        font-size: 3rem;
+        font-weight: 700;
+        margin-bottom: 40px;
+        color: #a78bfa;
+      }
+
+      h3 {
+        font-size: 2rem;
+        font-weight: 600;
+        margin-bottom: 30px;
+        color: #ddd6fe;
+      }
+
+      p,
+      li {
+        font-size: 1.5rem;
+        line-height: 1.8;
+        margin-bottom: 20px;
+        color: #e9d5ff;
+      }
+
+      ul {
+        list-style: none;
+        text-align: left;
+        max-width: 800px;
+      }
+
+      li {
+        position: relative;
+        padding-left: 40px;
+        margin-bottom: 25px;
+        opacity: 0;
+        animation: fadeInUp 0.6s ease-out forwards;
+      }
+
+      li:nth-child(1) {
+        animation-delay: 0.1s;
+      }
+      li:nth-child(2) {
+        animation-delay: 0.2s;
+      }
+      li:nth-child(3) {
+        animation-delay: 0.3s;
+      }
+      li:nth-child(4) {
+        animation-delay: 0.4s;
+      }
+      li:nth-child(5) {
+        animation-delay: 0.5s;
+      }
+
+      @keyframes fadeInUp {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+      }
+
+      li::before {
+        content: "▶";
+        position: absolute;
+        left: 0;
+        color: #8b5cf6;
+        font-size: 1.2rem;
+      }
+
+      .code-block {
+        background: #1e1e1e;
+        border: 2px solid #374151;
+        border-radius: 12px;
+        padding: 30px;
+        margin: 30px 0;
+        text-align: left;
+        font-family: "Consolas", "Monaco", monospace;
+        font-size: 1.2rem;
+        line-height: 1.8;
+        overflow-x: auto;
+        max-width: 900px;
+        box-shadow: 0 4px 20px rgba(139, 92, 246, 0.3);
+      }
+
+      .highlight {
+        color: #fbbf24;
+        font-weight: 600;
+      }
+
+      .emoji {
+        font-size: 3rem;
+        margin: 20px;
+        animation: bounce 2s infinite;
+      }
+
+      @keyframes bounce {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-20px);
+        }
+      }
+
+      .navigation {
+        position: fixed;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 20px;
+        z-index: 100;
+      }
+
+      button {
+        background: #8b5cf6;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s;
+        font-weight: 600;
+      }
+
+      button:hover {
+        background: #7c3aed;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+      }
+
+      button:active {
+        transform: translateY(0);
+      }
+
+      .slide-number {
+        position: fixed;
+        top: 30px;
+        right: 30px;
+        font-size: 1.2rem;
+        color: #9ca3af;
+      }
+
+      .timer {
+        position: fixed;
+        top: 30px;
+        left: 30px;
+        font-size: 1.2rem;
+        color: #9ca3af;
+      }
+
+      .workshop-card {
+        background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+        border-radius: 20px;
+        padding: 40px;
+        margin: 20px;
+        box-shadow: 0 10px 40px rgba(139, 92, 246, 0.4);
+        max-width: 800px;
+      }
+
+      .tips {
+        background: #1f2937;
+        border-left: 4px solid #8b5cf6;
+        padding: 20px;
+        margin: 20px 0;
+        border-radius: 8px;
+        text-align: left;
+      }
+
+      .interactive-demo {
+        background: #111827;
+        border: 2px solid #8b5cf6;
+        border-radius: 16px;
+        padding: 40px;
+        margin: 30px 0;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .interactive-demo::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(
+          circle,
+          rgba(139, 92, 246, 0.1) 0%,
+          transparent 70%
+        );
+        animation: pulse 4s ease-in-out infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          transform: scale(1);
+          opacity: 0.5;
+        }
+        50% {
+          transform: scale(1.1);
+          opacity: 0.8;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="presentation">
+      <div class="slide-number">
+        <span id="currentSlide">1</span> / <span id="totalSlides">13</span>
+      </div>
+
+      <div class="timer" id="timer">08:30</div>
+
+      <!-- Slide 1: Title -->
+      <div class="slide active">
+        <div class="emoji">🚀</div>
+        <h1>ReactFlow E2E 테스트 워크샵</h1>
+        <h3>테스트가 즐거워지는 3시간</h3>
+        <p style="margin-top: 40px; color: #9ca3af">
+          with Playwright & AI Tools
+        </p>
+      </div>
+
+      <!-- Slide 2: 오늘의 목표 -->
+      <div class="slide">
+        <h2>🎯 오늘의 목표</h2>
+        <div class="workshop-card">
+          <ul>
+            <li>ReactFlow 화면의 완벽한 E2E 테스트 구현</li>
+            <li>Drag & Drop, Node 연결, 저장까지 전체 플로우 검증</li>
+            <li>AI 도구를 활용한 효율적인 테스트 작성</li>
+            <li>테스트 작성이 즐거운 습관이 되도록!</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Slide 3: 왜 우리는 테스트를 미룰까? -->
+      <div class="slide">
+        <h2>🤔 왜 우리는 테스트를 미룰까?</h2>
+        <ul>
+          <li>"기능 구현이 급해서..."</li>
+          <li>"테스트 작성이 너무 번거로워서..."</li>
+          <li>"어차피 수동으로 확인하니까..."</li>
+          <li>"테스트 코드 작성법을 잘 몰라서..."</li>
+        </ul>
+        <div class="tips" style="margin-top: 40px">
+          <p>💡 오늘 이 모든 핑계를 극복해봅시다!</p>
+        </div>
+      </div>
+
+      <!-- Slide 4: E2E 테스트의 가치 -->
+      <div class="slide">
+        <h2>✨ E2E 테스트가 주는 선물</h2>
+        <div class="workshop-card">
+          <ul>
+            <li>🛡️ 배포 전 자동 검증으로 안정감</li>
+            <li>🔄 리팩토링할 때 든든한 안전망</li>
+            <li>📝 살아있는 문서 역할</li>
+            <li>⏰ 반복적인 수동 테스트에서 해방</li>
+            <li>😴 주말에 편히 잠들 수 있는 마음</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Slide 5: Playwright 소개 -->
+      <div class="slide">
+        <h2>🎭 Playwright가 특별한 이유</h2>
+        <ul>
+          <li>🌐 모든 브라우저 지원 (Chrome, Firefox, Safari)</li>
+          <li>⚡ 빠르고 안정적인 실행</li>
+          <li>📸 자동 스크린샷 & 비디오 녹화</li>
+          <li>🔍 강력한 디버깅 도구</li>
+          <li>🤖 AI 도구와의 완벽한 호환</li>
+        </ul>
+      </div>
+
+      <!-- Slide 6: AI 도구 활용 -->
+      <div class="slide">
+        <h2>🤖 AI와 함께하는 테스트 작성</h2>
+        <div class="interactive-demo">
+          <h3>Playwright MCP 활용법</h3>
+          <div class="code-block">
+            <span class="highlight">// AI가 생성한 테스트 코드 예시</span><br />
+            await page.click('[data-testid="add-node"]');<br />
+            await page.dragAndDrop('#node-1', '#canvas');<br />
+            await expect(page.locator('.node')).toBeVisible();
+          </div>
+          <p style="margin-top: 20px">💡 복잡한 셀렉터도 AI가 찾아줍니다!</p>
+        </div>
+      </div>
+
+      <!-- Slide 10: 실습 1 - 기본 설정 -->
+      <div class="slide">
+        <h2>🛠️ 실습 1: Playwright 설정하기</h2>
+        <div class="code-block">
+          <span class="highlight"># 설치</span><br />
+          npm init playwright@latest<br /><br />
+          <span class="highlight"># 설정 파일 구조</span><br />
+          playwright.config.ts<br />
+          tests/<br />
+          └── reactflow.spec.ts
+        </div>
+        <div class="tips">
+          <p>
+            💡 Tip: VS Code의 Playwright 확장 프로그램을 설치하면 더 쉽게
+            디버깅할 수 있어요!
+          </p>
+        </div>
+      </div>
+
+      <!-- Slide 11: 실습 2 - ReactFlow 테스트 -->
+      <div class="slide">
+        <h2>🔧 실습 2: ReactFlow 핵심 기능 테스트</h2>
+        <div class="code-block">
+          <span class="highlight">// Drag & Drop 테스트</span><br />
+          test('노드를 드래그하여 이동', async ({ page }) => {<br />
+          &nbsp;&nbsp;const node = page.locator('[data-id="node-1"]');<br />
+          &nbsp;&nbsp;await node.dragTo({ x: 300, y: 200 });<br />
+          &nbsp;&nbsp;// 위치 검증<br />
+          });<br /><br />
+          <span class="highlight">// 노드 연결 테스트</span><br />
+          test('두 노드를 연결', async ({ page }) => {<br />
+          &nbsp;&nbsp;// AI 도구로 생성할 예정<br />
+          });
+        </div>
+      </div>
+
+      <!-- Slide 7: 실습 준비 - ReactFlow 샘플 앱 -->
+      <div class="slide">
+        <h2>🏗️ 실습 준비: ReactFlow 샘플 앱</h2>
+        <h3>간단한 ReactFlow 컴포넌트를 만들어봅시다</h3>
+        <div class="tips">
+          <p>💡 아래 코드를 복사해서 프로젝트에 붙여넣으세요!</p>
+        </div>
+      </div>
+
+      <!-- Slide 8: ReactFlow 컴포넌트 코드 -->
+      <div class="slide">
+        <h3>📄 App.tsx</h3>
+        <div
+          class="code-block"
+          style="font-size: 0.9rem; max-height: 70vh; overflow-y: auto"
+        >
+          <span class="highlight">// App.tsx</span><br />
+          import React, { useCallback, useState } from 'react';<br />
+          import ReactFlow, {<br />
+          &nbsp;&nbsp;Node, Edge, Controls, Background,<br />
+          &nbsp;&nbsp;applyNodeChanges, applyEdgeChanges,<br />
+          &nbsp;&nbsp;addEdge, Connection, NodeChange, EdgeChange<br />
+          } from 'reactflow';<br />
+          import 'reactflow/dist/style.css';<br /><br />
+
+          const initialNodes: Node[] = [];<br />
+          const initialEdges: Edge[] = [];<br /><br />
+
+          function App() {<br />
+          &nbsp;&nbsp;const [nodes, setNodes] = useState(initialNodes);<br />
+          &nbsp;&nbsp;const [edges, setEdges] = useState(initialEdges);<br />
+          &nbsp;&nbsp;const [nodeId, setNodeId] = useState(1);<br /><br />
+
+          &nbsp;&nbsp;const onNodesChange = useCallback(<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;(changes: NodeChange[]) => setNodes((nds) =>
+          applyNodeChanges(changes, nds)),<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;[]<br />
+          &nbsp;&nbsp;);<br /><br />
+
+          &nbsp;&nbsp;const onEdgesChange = useCallback(<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;(changes: EdgeChange[]) => setEdges((eds) =>
+          applyEdgeChanges(changes, eds)),<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;[]<br />
+          &nbsp;&nbsp;);<br /><br />
+
+          &nbsp;&nbsp;const onConnect = useCallback(<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;(params: Connection) => setEdges((eds) =>
+          addEdge(params, eds)),<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;[]<br />
+          &nbsp;&nbsp;);<br /><br />
+
+          &nbsp;&nbsp;const addNode = () => {<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;const newNode: Node = {<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;id: `node-${nodeId}`,<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;data: { label: `Node ${nodeId}`
+          },<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;position: { x: Math.random() *
+          400, y: Math.random() * 400 },<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sourcePosition: 'right',<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;targetPosition: 'left',<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;};<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;setNodes((nds) => [...nds, newNode]);<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;setNodeId(nodeId + 1);<br />
+          &nbsp;&nbsp;};<br /><br />
+
+          &nbsp;&nbsp;const saveFlow = async () => {<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;if (nodes.length === 0) {<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;alert('노드가 없습니다!');<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return;<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;}<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;try {<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;const response = await
+          fetch('/api/save-flow', {<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;method: 'POST',<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;headers: {
+          'Content-Type': 'application/json' },<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;body: JSON.stringify({
+          nodes, edges }),<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;});<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if (response.ok) {<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;alert('저장되었습니다!');<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;} catch (error) {<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;alert('저장 실패!');<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;}<br />
+          &nbsp;&nbsp;};<br /><br />
+
+          &nbsp;&nbsp;return (<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&lt;div style={{ width: '100vw', height:
+          '100vh' }}&gt;<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;div style={{ position:
+          'absolute', top: 10, left: 10, zIndex: 10 }}&gt;<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;button<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;data-testid="add-node-button"<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;onClick={addNode}<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;style={{
+          marginRight: 10, padding: '8px 16px' }}<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&gt;<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;노드
+          추가<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/button&gt;<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;button<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;data-testid="save-button"<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;onClick={saveFlow}<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;style={{
+          padding: '8px 16px' }}<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&gt;<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;저장<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/button&gt;<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/div&gt;<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;ReactFlow<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nodes={nodes}<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;edges={edges}<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;onNodesChange={onNodesChange}<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;onEdgesChange={onEdgesChange}<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;onConnect={onConnect}<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;deleteKeyCode="Delete"<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&gt;<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Controls /&gt;<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Background
+          /&gt;<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/ReactFlow&gt;<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&lt;/div&gt;<br />
+          &nbsp;&nbsp;);<br />
+          }<br /><br />
+
+          export default App;
+        </div>
+      </div>
+
+      <!-- Slide 9: API 모킹 코드 -->
+      <div class="slide">
+        <h3>🔧 개발 서버 API 모킹</h3>
+        <div class="code-block" style="font-size: 0.95rem">
+          <span class="highlight"
+            >// vite.config.ts 또는 next.config.js에 추가</span
+          ><br /><br />
+
+          // Vite의 경우:<br />
+          export default {<br />
+          &nbsp;&nbsp;server: {<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;proxy: {<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'/api/save-flow': {<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;target:
+          'http://localhost:3000',<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;changeOrigin: true,<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;configure: (proxy,
+          options) => {<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;proxy.on('proxyReq',
+          (proxyReq, req, res) => {<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if
+          (req.method === 'POST') {<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;res.writeHead(200,
+          { 'Content-Type': 'application/json' });<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;res.end(JSON.stringify({
+          success: true }));<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;});<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;}<br />
+          &nbsp;&nbsp;}<br />
+          };
+        </div>
+        <div class="tips">
+          <p>
+            💡 또는 MSW(Mock Service Worker)를 사용하여 API를 모킹할 수
+            있습니다!
+          </p>
+        </div>
+      </div>
+
+      <!-- Slide 12: 실습 3 - 통합 시나리오 -->
+      <div class="slide">
+        <h2>🎯 실습 3: 전체 플로우 테스트</h2>
+        <ul>
+          <li>✅ 노드 추가</li>
+          <li>✅ 노드 이동 (Drag & Drop)</li>
+          <li>✅ 노드 연결</li>
+          <li>✅ 그래프 저장</li>
+          <li>✅ 저장된 데이터 검증</li>
+        </ul>
+        <div class="tips" style="margin-top: 30px">
+          <p>🎉 이 모든 과정을 하나의 테스트로 만들어봅시다!</p>
+        </div>
+      </div>
+
+      <!-- Slide 13: CI/CD 연동 -->
+      <div class="slide">
+        <h2>🚀 CI/CD와 함께하기</h2>
+        <div class="code-block">
+          <span class="highlight"># GitHub Actions 예시</span><br />
+          name: E2E Tests<br />
+          on: [push, pull_request]<br />
+          jobs:<br />
+          &nbsp;&nbsp;test:<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;runs-on: ubuntu-latest<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;steps:<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- uses: actions/checkout@v3<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- run: npm ci<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- run: npx playwright test
+        </div>
+      </div>
+
+      <!-- Slide 14: 마무리 -->
+      <div class="slide">
+        <div class="emoji">🎉</div>
+        <h1>수고하셨습니다!</h1>
+        <h3>이제 테스트는 우리의 즐거운 일상이 됩니다</h3>
+        <div class="tips" style="margin-top: 40px">
+          <p>💬 Q&A 시간</p>
+          <p>🍰 다과를 즐기며 네트워킹해요!</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="navigation">
+      <button onclick="previousSlide()">이전</button>
+      <button onclick="nextSlide()">다음</button>
+    </div>
+
+    <script>
+      let currentSlideIndex = 0;
+      const slides = document.querySelectorAll(".slide");
+      const totalSlides = slides.length;
+
+      document.getElementById("totalSlides").textContent = totalSlides;
+
+      function showSlide(index) {
+        slides.forEach((slide) => slide.classList.remove("active"));
+        slides[index].classList.add("active");
+        document.getElementById("currentSlide").textContent = index + 1;
+
+        // Reset animations
+        const currentSlide = slides[index];
+        const listItems = currentSlide.querySelectorAll("li");
+        listItems.forEach((item, i) => {
+          item.style.animation = "none";
+          setTimeout(() => {
+            item.style.animation = `fadeInUp 0.6s ease-out forwards`;
+            item.style.animationDelay = `${i * 0.1}s`;
+          }, 10);
+        });
+      }
+
+      function nextSlide() {
+        if (currentSlideIndex < totalSlides - 1) {
+          currentSlideIndex++;
+          showSlide(currentSlideIndex);
+        }
+      }
+
+      function previousSlide() {
+        if (currentSlideIndex > 0) {
+          currentSlideIndex--;
+          showSlide(currentSlideIndex);
+        }
+      }
+
+      // Keyboard navigation
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowRight") nextSlide();
+        if (e.key === "ArrowLeft") previousSlide();
+      });
+
+      // Timer
+      let startTime = new Date();
+      startTime.setHours(8, 30, 0, 0);
+
+      function updateTimer() {
+        const now = new Date();
+        const elapsed = now - startTime;
+        const hours = Math.floor(elapsed / 3600000);
+        const minutes = Math.floor((elapsed % 3600000) / 60000);
+
+        const currentHour = 8 + hours;
+        const currentMinute = 30 + minutes;
+        const adjustedHour = currentHour + Math.floor(currentMinute / 60);
+        const adjustedMinute = currentMinute % 60;
+
+        const timeString = `${adjustedHour.toString().padStart(2, "0")}:${adjustedMinute.toString().padStart(2, "0")}`;
+        document.getElementById("timer").textContent = timeString;
+      }
+
+      setInterval(updateTimer, 1000);
+    </script>
+  </body>
+</html>
